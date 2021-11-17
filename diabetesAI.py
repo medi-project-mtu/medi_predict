@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from sklearn import tree
-from sklearn.model_selection import train_test_split
 
 
 def replace_zero(df):
@@ -54,6 +53,6 @@ def diabetesAI(input_query):
     clf = tree.DecisionTreeClassifier()
 
     clf.fit(X, Y)
-    print(clf.score(X,Y))
+    print(clf.score(X, Y))
 
     return clf.predict(input_query)
