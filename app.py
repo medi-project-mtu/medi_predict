@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify
 import numpy as np
-import pickle
+import pandas as pd
+import diabetesAI
 
-std = pickle.load(open("std.pkl", "rb"))
-present_model = pickle.load(open("svm_model.pkl", "rb"))
+# import pickle
+
+# std = pickle.load(open("std.pkl", "rb"))
+# present_model = pickle.load(open("svm_model.pkl", "rb"))
 
 app = Flask(__name__)
 
@@ -27,12 +30,13 @@ def predict():
     input_query = np.array(
         [[pregnancies, glucose, bp, skinThickness, insulin, bmi, dpf, age]]
     )
-    input_query = std.transform(input_query)
+    output_print = diabetesAI.diabetesAI(input_query)
+    # input_query = std.transform(input_query)
 
-    prediction = present_model.predict_proba(input_query)
-    output = "{0:.{1}f}".format(prediction[0][1], 2)
-    output_print = str(float(output) * 100) + "%"
-    print(output_print)
+    # prediction = present_model.predict_proba(input_query)
+    # output = "{0:.{1}f}".format(prediction[0][1], 2)
+    # output_print = str(float(output) * 100) + "%"
+    # print(output_print)
 
     return jsonify({"Diagnosis": str(output_print)})
 
