@@ -32,7 +32,9 @@ from tensorflow.keras import layers
 import joblib
 from sklearn.tree import DecisionTreeClassifier
 
-df = pd.read_csv("diabetes.csv")
+
+
+df = pd.read_csv("testing/diabetes.csv")
 
 
 def replace_zero(df):
@@ -81,6 +83,12 @@ columns = X.columns
 
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.20, random_state=20, stratify=Y)
 
+clf = DecisionTreeClassifier()
+
+clf.fit(X_train, y_train)
+
+print(clf.predict([[1,122,90,51,220,49.7,0.325,31]]))
+
 
 # clf = DecisionTreeClassifier(criterion="entropy", max_depth=3)
 # X_train = clf.transform(X_train)
@@ -103,34 +111,34 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.20, random
 # pickle.dump(svm_model, open('svm_model.pkl', 'wb'))
 
 
-def build_model():
-    model = tf.keras.Sequential([
-        tf.keras.layers.Dense(8, activation='relu', input_shape=[
-                              len(X_train.keys())]),
-        #tf.keras.layers.Dense(4, activation='relu'),
-        tf.keras.layers.Dense(4, activation='relu'),
-        tf.keras.layers.Dense(2, activation='relu'),
+# def build_model():
+    # model = tf.keras.Sequential([
+    #     tf.keras.layers.Dense(8, activation='relu', input_shape=[
+    #                           len(X_train.keys())]),
+    #     #tf.keras.layers.Dense(4, activation='relu'),
+    #     tf.keras.layers.Dense(4, activation='relu'),
+    #     tf.keras.layers.Dense(2, activation='relu'),
 
-        tf.keras.layers.Dense(1, activation='sigmoid')
-    ])
+    #     tf.keras.layers.Dense(1, activation='sigmoid')
+    # ])
 
-    optimizer = tf.keras.optimizers.Adam(
-        learning_rate=0.005, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
+    # optimizer = tf.keras.optimizers.Adam(
+    #     learning_rate=0.005, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
 
-    model.compile(loss='binary_crossentropy',
-                  optimizer=optimizer, metrics=['accuracy'])
-    return model
+    # model.compile(loss='binary_crossentropy',
+    #               optimizer=optimizer, metrics=['accuracy'])
+    # return model
 
 
-neural_model = build_model()
+# neural_model = build_model()
 
-checkpoint_name = 'Weights_raw\Weights_raw-{epoch:03d}--{val_accuracy:.5f}.hdf5'
+# checkpoint_name = 'Weights_raw\Weights_raw-{epoch:03d}--{val_accuracy:.5f}.hdf5'
 
-# checkpoint_name = "Weight\diabetes_raw.h5"
-checkpoint = ModelCheckpoint(
-    checkpoint_name, monitor='val_loss', verbose=1, save_best_only=True, mode='auto')
-callbacks_list = [checkpoint]
+# # checkpoint_name = "Weight\diabetes_raw.h5"
+# checkpoint = ModelCheckpoint(
+#     checkpoint_name, monitor='val_loss', verbose=1, save_best_only=True, mode='auto')
+# callbacks_list = [checkpoint]
 
-EPOCHS = 1000
-neural_pred = neural_model.fit(X_train, y_train, epochs=EPOCHS,
-                               validation_split=0.15, verbose=2, callbacks=callbacks_list)
+# EPOCHS = 1000
+# neural_pred = neural_model.fit(X_train, y_train, epochs=EPOCHS,
+#                                validation_split=0.15, verbose=2, callbacks=callbacks_list)
