@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "Hello world"
+    return "<h1>Medi-Predict API</h1>"
 
 
 @app.route("/predictDiabetes", methods=["POST"])
