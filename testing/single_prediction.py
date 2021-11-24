@@ -1,7 +1,7 @@
 import tensorflow as tf
 import pickle
 
-present_model = tf.keras.models.load_model('Weight/diabetes.h5')
+present_model = pickle.load(open("heartDiseaseDT.pkl", "rb"))
 
 # 7,97,76,32,91,40.9,0.871,32,1  == 0.86088324 V
 # 2,68,62,13,15,20.1,0.257,23,0  == 0.0 V
@@ -23,10 +23,10 @@ present_model = tf.keras.models.load_model('Weight/diabetes.h5')
 # 0,181,88,44,510,43.3,0.222,26,1 == 0.86088324 V
 # 1,128,88,39,110,36.5,1.057,37,1 == 0.86088324 V
 
-std = pickle.load(open('std.pkl', 'rb'))
+# std = pickle.load(open("std.pkl", "rb"))
 # model = pickle.load(open("svm_model.pkl", "rb"))
 
-print(std)
+# print(std)
 # row_df0 = std.transform([[11,120,80,37,150,42.3,0.785,48]])
 # row_df1 = std.transform([[3,102,44,20,94,30.8,0.4,26]])
 # row_df2 = std.transform([[1,109,58,18,116,28.5,0.219,22]])
@@ -43,7 +43,7 @@ print(std)
 #        row_df5, row_df6, row_df7, row_df8, row_df9]
 
 # for i in range(len(arr)):
-    
+
 #     ouput = present_model.predict(arr[i])
 #     print(ouput[0][0])
 
@@ -63,7 +63,6 @@ print(std)
 
 # for i in range(len(arr)):
 
-#     prediction = model.predict_proba(arr[i])
-#     output = '{0:.{1}f}'.format(prediction[0][1], 2)
-#     output_print = str(float(output)*100)+'%'
-#     print(output_print)
+prediction = present_model.predict([[63, 1, 1, 145, 233, 1, 2, 150, 0, 2.3, 3, 0, 6]])
+# output = "{0:.{1}f}".format(prediction[0][1], 2)
+print(prediction)
