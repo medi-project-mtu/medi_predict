@@ -1,161 +1,247 @@
-import numpy as np
 import pandas as pd
-import seaborn as sns
+# from xgboost import XGBClassifier
+
+from warnings import simplefilter
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from sklearn.svm import SVC
+import seaborn as sns
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import f1_score, make_scorer
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import TSNE
-from sklearn.metrics import (
-    fbeta_score,
-    make_scorer,
-    precision_score,
-    recall_score,
-    confusion_matrix,
-    accuracy_score,
-)
-from sklearn import svm
-import pickle
-from tensorflow.keras.callbacks import ModelCheckpoint
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-import joblib
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix
+from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix
+# import lightgbm as lgb
+from sklearn.metrics import confusion_matrix
+import pickle
+simplefilter(action='ignore', category = FutureWarning)
 
 
-df = pd.read_csv("testing/cleveland.csv")
+# ignore all future warnings
+simplefilter(action='ignore', category = FutureWarning)
 
 
-# we can dropna to the entire df cus there are only 6 null values in 2 columns, so tiny it's negligible
-df = df.dropna()
+df = pd.read_csv('cleveland.csv', header = None)
+
+df.columns = ['age', 'sex', 'cp', 'trestbps', 'chol',
+              'fbs', 'restecg', 'thalach', 'exang', 
+              'oldpeak', 'slope', 'ca', 'thal', 'target']
+
+### 1 = male, 0 = female
+df.isnull().sum()
+
+df['target'] = df.target.map({0: 0, 1: 1, 2: 1, 3: 1, 4: 1})
+df['sex'] = df.sex.map({0: 'female', 1: 'male'})
+df['thal'] = df.thal.fillna(df.thal.mean())
+df['ca'] = df.ca.fillna(df.ca.mean())
 
 
-# def replace_zero(df):
-#     df_nan = df.copy(deep=True)
-#     cols = ["Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI"]
-#     df_nan[cols] = df_nan[cols].replace({0: np.nan})
-#     return df_nan
+# distribution of target vs age 
+sns.set_context("paper", font_scale = 2, rc = {"font.size": 20,"axes.titlesize": 25,"axes.labelsize": 20}) 
+sns.catplot(kind = 'count', data = df, x = 'age', hue = 'target', order = df['age'].sort_values().unique())
+plt.title('Variation of Age for each target class')
+plt.show()
+
+ 
+# barplot of age vs sex with hue = target
+sns.catplot(kind = 'bar', data = df, y = 'age', x = 'sex', hue = 'target')
+plt.title('Distribution of age vs sex with the target class')
+plt.show()
+
+df['sex'] = df.sex.map({'female': 0, 'male': 1})
 
 
-# df_nan = replace_zero(df)
+################################## data preprocessing
+X = df.iloc[:, :-1].values
+y = df.iloc[:, -1].values
 
 
-# def find_median(df, col):
-
-#     df_nondiab = df[df["Outcome"] == 0].reset_index(drop=True)
-#     df_diab = df[df["Outcome"] == 1].reset_index(drop=True)
-#     return (df_nondiab[col].median(), df_diab[col].median())
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
 
-# def replace_null(df, var):
+scaler = StandardScaler()
+std = scaler.fit(X_train)
 
-#     median_tuple = find_median(df, var)
-#     var_0 = median_tuple[0]
-#     var_1 = median_tuple[1]
+pickle.dump(std, open('std_heart.pkl','wb'))
 
-#     df.loc[(df["Outcome"] == 0) & (df[var].isnull()), var] = var_0
-#     df.loc[(df["Outcome"] == 1) & (df[var].isnull()), var] = var_1
-
-#     return df[var].isnull().sum()
+X_train = std.transform(X_train)
+X_test = std.transform(X_test)
 
 
-# replace_null(df_nan, "Glucose")
-# replace_null(df_nan, "BloodPressure")
-# replace_null(df_nan, "SkinThickness")
-# replace_null(df_nan, "Insulin")
-# replace_null(df_nan, "BMI")
+#########################################   SVM   #############################################################
 
-# df = df_nan.copy()
+classifier = SVC(kernel = 'rbf')
+classifier.fit(X_train, y_train)
 
-# data = df.copy()
+# Predicting the Test set results
+y_pred = classifier.predict(X_test)
 
-Y = df.iloc[:, -1]
-X = df.iloc[:, :-1]
+cm_test = confusion_matrix(y_pred, y_test)
 
-# columns = X.columns
-# print(columns)
+y_pred_train = classifier.predict(X_train)
+cm_train = confusion_matrix(y_pred_train, y_train)
 
-# X_train, X_test, y_train, y_test = train_test_split(
-#     X, Y, test_size=0.20, random_state=20, stratify=Y
-# )
+print()
+print('Accuracy for training set for svm = {}'.format((cm_train[0][0] + cm_train[1][1])/len(y_train)))
+print('Accuracy for test set for svm = {}'.format((cm_test[0][0] + cm_test[1][1])/len(y_test)))
 
-clf = DecisionTreeClassifier()
+pickle.dump(classifier, open('SVC_heart_model.pkl','wb'))
 
-clf.fit(X, Y)
-
-pred = clf.predict([[67, 1, 4, 160, 286, 0, 2, 108, 1, 1.5, 2, 3, 3]])
-print(pred)
-# clf.fit(X_train, y_train)
-
-# print(clf.predict([[1, 122, 90, 51, 220, 49.7, 0.325, 31]]))
-# =================================
-
-# clf = DecisionTreeClassifier(criterion="entropy", max_depth=3)
-# X_train = clf.transform(X_train)
+#########################################   Naive Bayes  #############################################################
+# X = df.iloc[:, :-1].values
+# y = df.iloc[:, -1].values
 
 
-# scaler = StandardScaler()
-# std = scaler.fit(X_train)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
-# joblib.dump(std, open("stdHeartDisease.pkl", "wb"))
-
-# X_train = std.transform(X_train)
-# X_test = std.transform(X_test)
-# X_train = pd.DataFrame(X_train)
-# X_test = pd.DataFrame(X_test)
-
-# svm_model = svm.SVC(probability=True).fit(X_train, y_train)
-# svm_pred = svm_model.predict(X_test)
-# svm_model.score(X_test, y_test)
-
-# pickle.dump(clf, open("heartDiseaseDT.pkl", "wb"))
+# classifier = GaussianNB()
+# classifier.fit(X_train, y_train)
 
 
-# def build_model():
-# model = tf.keras.Sequential([
-#     tf.keras.layers.Dense(8, activation='relu', input_shape=[
-#                           len(X_train.keys())]),
-#     #tf.keras.layers.Dense(4, activation='relu'),
-#     tf.keras.layers.Dense(4, activation='relu'),
-#     tf.keras.layers.Dense(2, activation='relu'),
-
-#     tf.keras.layers.Dense(1, activation='sigmoid')
-# ])
-
-# optimizer = tf.keras.optimizers.Adam(
-#     learning_rate=0.005, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
-
-# model.compile(loss='binary_crossentropy',
-#               optimizer=optimizer, metrics=['accuracy'])
-# return model
+# # Predicting the Test set results
+# y_pred = classifier.predict(X_test)
 
 
-# neural_model = build_model()
+# cm_test = confusion_matrix(y_pred, y_test)
 
-# checkpoint_name = 'Weights_raw\Weights_raw-{epoch:03d}--{val_accuracy:.5f}.hdf5'
+# y_pred_train = classifier.predict(X_train)
+# cm_train = confusion_matrix(y_pred_train, y_train)
 
-# # checkpoint_name = "Weight\diabetes_raw.h5"
-# checkpoint = ModelCheckpoint(
-#     checkpoint_name, monitor='val_loss', verbose=1, save_best_only=True, mode='auto')
-# callbacks_list = [checkpoint]
+# print()
+# print('Accuracy for training set for Naive Bayes = {}'.format((cm_train[0][0] + cm_train[1][1])/len(y_train)))
+# print('Accuracy for test set for Naive Bayes = {}'.format((cm_test[0][0] + cm_test[1][1])/len(y_test)))
 
-# EPOCHS = 1000
-# neural_pred = neural_model.fit(X_train, y_train, epochs=EPOCHS,
-#                                validation_split=0.15, verbose=2, callbacks=callbacks_list)
+
+#########################################   Logistic Regression  #############################################################
+# X = df.iloc[:, :-1].values
+# y = df.iloc[:, -1].values
+
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+
+# from sklearn.linear_model import LogisticRegression
+# classifier = LogisticRegression()
+# classifier.fit(X_train, y_train)
+
+# # Predicting the Test set results
+# y_pred = classifier.predict(X_test)
+
+# from sklearn.metrics import confusion_matrix
+# cm_test = confusion_matrix(y_pred, y_test)
+
+# y_pred_train = classifier.predict(X_train)
+# cm_train = confusion_matrix(y_pred_train, y_train)
+
+# print()
+# print('Accuracy for training set for Logistic Regression = {}'.format((cm_train[0][0] + cm_train[1][1])/len(y_train)))
+# print('Accuracy for test set for Logistic Regression = {}'.format((cm_test[0][0] + cm_test[1][1])/len(y_test)))
+
+#########################################   Decision Tree  #############################################################
+# X = df.iloc[:, :-1].values
+# y = df.iloc[:, -1].values
+
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+
+
+# classifier = DecisionTreeClassifier()
+# classifier.fit(X_train, y_train)
+
+# # Predicting the Test set results
+# y_pred = classifier.predict(X_test)
+
+# from sklearn.metrics import confusion_matrix
+# cm_test = confusion_matrix(y_pred, y_test)
+
+# y_pred_train = classifier.predict(X_train)
+# cm_train = confusion_matrix(y_pred_train, y_train)
+
+# print()
+# print('Accuracy for training set for Decision Tree = {}'.format((cm_train[0][0] + cm_train[1][1])/len(y_train)))
+# print('Accuracy for test set for Decision Tree = {}'.format((cm_test[0][0] + cm_test[1][1])/len(y_test)))
+
+
+#########################################  Random Forest  #############################################################
+# X = df.iloc[:, :-1].values
+# y = df.iloc[:, -1].values
+
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+
+
+# classifier = RandomForestClassifier(n_estimators = 10)
+# classifier.fit(X_train, y_train)
+
+# # Predicting the Test set results
+# y_pred = classifier.predict(X_test)
+
+# from sklearn.metrics import confusion_matrix
+# cm_test = confusion_matrix(y_pred, y_test)
+
+# y_pred_train = classifier.predict(X_train)
+# cm_train = confusion_matrix(y_pred_train, y_train)
+
+# print()
+# print('Accuracy for training set for Random Forest = {}'.format((cm_train[0][0] + cm_train[1][1])/len(y_train)))
+# print('Accuracy for test set for Random Forest = {}'.format((cm_test[0][0] + cm_test[1][1])/len(y_test)))
+
+###############################################################################
+# # applying lightGBM
+
+# d_train = lgb.Dataset(X_train, label = y_train)
+# params = {}
+
+# clf = lgb.train(params, d_train, 100)
+# #Prediction
+# y_pred = clf.predict(X_test)
+# #convert into binary values
+# for i in range(0, len(y_pred)):
+#     if y_pred[i]>= 0.5:       # setting threshold to .5
+#        y_pred[i]=1
+#     else:  
+#        y_pred[i]=0
+       
+
+# cm_test = confusion_matrix(y_pred, y_test)
+
+# y_pred_train = clf.predict(X_train)
+
+# for i in range(0, len(y_pred_train)):
+#     if y_pred_train[i]>= 0.5:       # setting threshold to .5
+#        y_pred_train[i]=1
+#     else:  
+#        y_pred_train[i]=0
+       
+# cm_train = confusion_matrix(y_pred_train, y_train)
+# print()
+# print('Accuracy for training set for LightGBM = {}'.format((cm_train[0][0] + cm_train[1][1])/len(y_train)))
+# print('Accuracy for test set for LightGBM = {}'.format((cm_test[0][0] + cm_test[1][1])/len(y_test)))
+
+
+###############################################################################
+# applying XGBoost
+
+#from sklearn.model_selection import train_test_split
+#X_train, X_test, y_train, y_test = train_test_split(X, target, test_size = 0.20, random_state = 0)
+
+
+# xg = XGBClassifier()
+# xg.fit(X_train, y_train)
+# y_pred = xg.predict(X_test)
+
+
+# cm_test = confusion_matrix(y_pred, y_test)
+
+# y_pred_train = xg.predict(X_train)
+
+# for i in range(0, len(y_pred_train)):
+#     if y_pred_train[i]>= 0.5:       # setting threshold to .5
+#        y_pred_train[i]=1
+#     else:  
+#        y_pred_train[i]=0
+       
+# cm_train = confusion_matrix(y_pred_train, y_train)
+# print()
+# print('Accuracy for training set for XGBoost = {}'.format((cm_train[0][0] + cm_train[1][1])/len(y_train)))
+# print('Accuracy for test set for XGBoost = {}'.format((cm_test[0][0] + cm_test[1][1])/len(y_test)))
