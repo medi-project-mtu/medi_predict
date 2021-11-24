@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 import numpy as np
 import pandas as pd
-import diabetesAI
 
 import pickle
 
@@ -30,7 +29,6 @@ def predict():
     input_query = np.array(
         [[pregnancies, glucose, bp, skinThickness, insulin, bmi, dpf, age]]
     )
-    # output_print = diabetesAI.diabetesAI(input_query)
     input_query = std.transform(input_query)
 
     prediction = present_model.predict_proba(input_query)
