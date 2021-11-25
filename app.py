@@ -5,8 +5,6 @@ from sklearn.tree import DecisionTreeClassifier
 
 import pickle
 
-std = pickle.load(open("std.pkl", "rb"))
-present_model = pickle.load(open("svm_model.pkl", "rb"))
 
 app = Flask(__name__)
 
@@ -23,12 +21,11 @@ def predictAlzheimers():
 
 @app.route("/predictHeartDisease", methods=["POST"])
 def predictHeartDisease():
-    df = pd.read_csv("testing/cleveland.csv")
-    df = df.dropna()
-    Y = df.iloc[:, -1]
-    X = df.iloc[:, :-1]
-    clf = DecisionTreeClassifier()
-    clf.fit(X, Y)
+    std_hd = pickle.load(open("models/heart_disease/std_heart.pkl", "rb"))
+    present_model = pickle.load(
+        open("models/heart_disease/SVC_heart_model_proba.pkl", "rb")
+    )
+
     age = request.form.get("age")
     sex = request.form.get("sex")
     chest_pain_type = request.form.get("chestPainType")
@@ -43,7 +40,7 @@ def predictHeartDisease():
     major_vessels = request.form.get("majorVessels")
     thal = request.form.get("thal")
 
-    pred = clf.predict(
+    input_query = np.array(
         [
             [
                 age,
@@ -62,12 +59,19 @@ def predictHeartDisease():
             ]
         ]
     )
-    print(pred)
-    return jsonify({"Diagnosis": str(pred[0])})
+    input_query = std_hd.transform(input_query)
+
+    prediction = present_model.predict_proba(input_query)
+
+    print(prediction[0][1])
+
+    return jsonify({"Diagnosis": str(prediction[0][1])})
 
 
 @app.route("/predictDiabetes", methods=["POST"])
 def predictDiabetes():
+    std_diabetes = pickle.load(open("models/diabletes/std.pkl", "rb"))
+    present_model = pickle.load(open("models/diabetes/svm_model.pkl", "rb"))
     pregnancies = request.form.get("pregnancies")
     glucose = request.form.get("glucose")
     bp = request.form.get("bp")
@@ -80,7 +84,7 @@ def predictDiabetes():
     input_query = np.array(
         [[pregnancies, glucose, bp, skinThickness, insulin, bmi, dpf, age]]
     )
-    input_query = std.transform(input_query)
+    input_query = std_diabetes.transform(input_query)
 
     prediction = present_model.predict_proba(input_query)
     output = "{0:.{1}f}".format(prediction[0][1], 2)
