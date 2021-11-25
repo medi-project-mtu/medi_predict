@@ -65,7 +65,7 @@ data[['MMSE']] = imputer.fit_transform(data[['MMSE']])
 le = preprocessing.LabelEncoder()
 data['CDR'] = le.fit_transform(data['CDR'].values)
 
-data['M/F'] = data['M/F'].map({'M':0,'F':1})
+data['M/F'] = data['M/F'].map({'M':1,'F':0})
 data.pop('Hand')
 
 data = pd.get_dummies(data)
