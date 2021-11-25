@@ -36,8 +36,8 @@ import seaborn as sns
 from sklearn.ensemble import GradientBoostingClassifier
 import pickle
 
-data_cross = pd.read_csv("testing/oasis_cross-sectional.csv")
-data_long = pd.read_csv("testing/oasis_longitudinal.csv")
+data_cross = pd.read_csv("model notebooks/alzheimer/oasis_cross-sectional.csv")
+data_long = pd.read_csv("model notebooks/alzheimer/oasis_longitudinal.csv")
 
 data_cross.dropna(subset=['CDR'],inplace=True)
 
@@ -65,6 +65,9 @@ data[['MMSE']] = imputer.fit_transform(data[['MMSE']])
 le = preprocessing.LabelEncoder()
 data['CDR'] = le.fit_transform(data['CDR'].values)
 
+data['M/F'] = data['M/F'].map({'M':0,'F':1})
+data.pop('Hand')
+
 data = pd.get_dummies(data)
 
 data = data.drop(data[data['CDR']==3].index)
@@ -85,7 +88,7 @@ X_train = pd.DataFrame(X_train, columns = columns)
 X_test = pd.DataFrame(X_test, columns = columns)
 
 
-pickle.dump(std, open('std_alz.pkl','wb'))
+pickle.dump(std, open('models/alzheimer/std_alz_cleaned.pkl','wb'))
 
 FOLDS =10
 
@@ -112,7 +115,7 @@ gb_random.best_params_
 
 model_gb = gb_random.best_estimator_
 
-pickle.dump(model_gb, open('gb_model.pkl','wb'))
+pickle.dump(model_gb, open('models/alzheimer/gb_model_cleaned.pkl','wb'))
 
 print(model_gb.score(X_test,y_test))
 
