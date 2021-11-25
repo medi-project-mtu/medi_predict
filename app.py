@@ -16,7 +16,31 @@ def index():
 
 @app.route("/predictAlzheimers", methods=["POST"])
 def predictAlzheimers():
-    ...
+    std_alz = pickle.load(open("models/alzheimer/std_alz.pkl", "rb"))
+    present_model = pickle.load(open("models/alzheimer/gb_model.pkl", "rb"))
+
+    mf = request.form.get("mf")
+    hand = request.form.get("hand")
+    age = request.form.get("age")
+    educ = request.form.get("educ")
+    ses = request.form.get("ses")
+    mmse = request.form.get("mmse")
+    etiv = request.form.get("etiv")
+    nwbv = request.form.get("nwbv")
+    asf = request.form.get("asf")
+    input_query = np.array([mf, hand, age, educ, ses, mmse, etiv, nwbv, asf])
+    # input_query = pd.get_dummies(input_query)
+    print(input_query)
+
+    input_query = std_alz.transform(input_query)
+
+    prediction = present_model.predict(input_query)
+
+    output = "{0:.{1}f}".format(prediction[0][1], 2)
+    output_print = str(float(output) * 100) + "%"
+    print(output_print)
+
+    return jsonify({"Diagnosis": str(output_print)})
 
 
 @app.route("/predictHeartDisease", methods=["POST"])
@@ -63,9 +87,11 @@ def predictHeartDisease():
 
     prediction = present_model.predict_proba(input_query)
 
-    print(prediction[0][1])
+    output = "{0:.{1}f}".format(prediction[0][1], 2)
+    output_print = str(float(output) * 100) + "%"
+    print(output_print)
 
-    return jsonify({"Diagnosis": str(prediction[0][1])})
+    return jsonify({"Diagnosis": str(output_print)})
 
 
 @app.route("/predictDiabetes", methods=["POST"])
