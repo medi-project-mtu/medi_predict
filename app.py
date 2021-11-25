@@ -96,7 +96,7 @@ def predictHeartDisease():
 
 @app.route("/predictDiabetes", methods=["POST"])
 def predictDiabetes():
-    std_diabetes = pickle.load(open("models/diabletes/std.pkl", "rb"))
+    std_diabetes = pickle.load(open("models/diabetes/std.pkl", "rb"))
     present_model = pickle.load(open("models/diabetes/svm_model.pkl", "rb"))
     pregnancies = request.form.get("pregnancies")
     glucose = request.form.get("glucose")
